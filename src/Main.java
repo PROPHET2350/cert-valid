@@ -8,10 +8,10 @@ import java.util.Enumeration;
 
 public class Main {
     public static void main(String[] args) {
-        Validate("13428298_identity_1720916079.p12", "Trend2024");
+        Validate("13428298_identity_1720916079.p12", "Trend2024","1793209168001");
     }
 
-    public static Date Validate(String path, String password) {
+    public static Date Validate(String path, String password,String ruc) {
         InputStream stream;
         try {
             stream = new FileInputStream(path);
@@ -27,6 +27,7 @@ public class Main {
                 String alias = aliases.nextElement();
                 X509Certificate certFromKeyStore = (X509Certificate) store.getCertificate(alias);
                 String subject = certFromKeyStore.getSubjectX500Principal().toString();
+                validateRuc(subject,ruc);
                 Date certExpiryDate = ((X509Certificate) store.getCertificate(alias)).getNotAfter();
                 SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd");
                 ft.format(certExpiryDate);
