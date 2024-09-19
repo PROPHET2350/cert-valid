@@ -8,16 +8,22 @@ import java.util.Enumeration;
 
 public class Main {
     public static void main(String[] args) {
-        Validate("13428298_identity_1720916079.p12", "Trend2024","1793209168001");
+        if (args.length != 3) {
+            System.out.println("Argumentos insuficientes");
+            System.exit(-1);
+//            Validate("13428298_identity_1720916079.p12", "Trend2024", "1793209168");
+        } else {
+            Validate(args[0], args[1], args[2]);
+        }
     }
 
-    public static Date Validate(String path, String password,String ruc) {
-        InputStream stream;
+    public static Date Validate(String path, String password, String ruc) {
+        InputStream stream = null;
         try {
             stream = new FileInputStream(path);
         } catch (Exception e) {
-            System.exit(-2);
-            throw new IllegalArgumentException("Bad path");
+            System.out.println("Bad path");
+            System.exit(-1);
         }
         try {
             KeyStore store = KeyStore.getInstance("PKCS12");
@@ -26,44 +32,38 @@ public class Main {
             while (aliases.hasMoreElements()) {
                 String alias = aliases.nextElement();
                 X509Certificate certFromKeyStore = (X509Certificate) store.getCertificate(alias);
-                String subject = certFromKeyStore.getSubjectX500Principal().toString();
-                validateRuc(subject,ruc);
+                String a = certFromKeyStore.toString().replaceAll("\\n\\r", "");
+                validateRuc(a, ruc);
                 Date certExpiryDate = ((X509Certificate) store.getCertificate(alias)).getNotAfter();
                 SimpleDateFormat ft = new SimpleDateFormat("yyyy-MM-dd");
                 ft.format(certExpiryDate);
                 Date today = new Date();
                 long dateDiff = certExpiryDate.getTime() - today.getTime();
                 long expiresIn = dateDiff / (24 * 60 * 60 * 1000);
-                System.out.println(ft.format(certExpiryDate));
                 if (expiresIn < 0) {
-                    System.out.println("FIRMA EXPIRADA");
-                    System.exit(-1);
-                    throw new IllegalArgumentException("The sign is expired, expiration date is " + certExpiryDate);
+                    System.out.println("Firma expirada desde " + ft.format(certExpiryDate));
+                    System.exit(-2);
                 } else {
-                    System.out.println("CASO BUENO");
+                    System.out.println(ft.format(certExpiryDate));
                     System.exit(0);
                 }
             }
         } catch (Exception e) {
             System.out.println("Contraseña Incorrecta");
-            System.exit(-1);
-            throw new IllegalArgumentException(e.getMessage());
+            System.exit(-3);
         }
         return null;
     }
 
     public static void validateRuc(String subject, String ruc) {
-        var split = subject.split(" ");
-        var certRuc = "";
-        if (split.length > 0) {
-            var secondSplit = split[0].split("-");
-            if (secondSplit.length >= 1) {
-                certRuc = secondSplit[1].replaceAll("[^\\d-]|-(?=\\D)", "");
-                System.out.println(certRuc);
+        try {
+            var x = subject.contains(ruc);
+            if (!x) {
+                System.out.println("RUC Incorrecto");
+                System.exit(-4);
             }
-        }
-        if (!certRuc.equals(ruc)) {
-            System.out.println("RUC NO COINCIDE");
+        }catch (Exception e){
+            System.exit(-5);
         }
     }
 }
